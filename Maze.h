@@ -17,12 +17,13 @@ private:
 	int m_exit;
 
 	void GenerateHelper(int, int, bool*);
-	inline bool isValid(int row, int col) { return row > 0 && row < m_rows && col > 0 && cols < m_cols; }
+	inline bool isValid(int row, int col) { return row >= 0 && row < m_rows && col >= 0 && col < m_cols; }
 
 public:
 	Maze(int rows, int cols);
 	void Generate();
-	void IsWall(int row, int col, Direction direction);
+	bool IsWall(int row, int col, Direction direction);
+	void Render2D();
 };
 
 #endif
