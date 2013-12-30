@@ -1,6 +1,8 @@
 #ifndef __RENDERER_H__
 #define __RENDERER_H__
 
+#include "Maze.h"
+
 #define scale 2
 
 enum Orientation{
@@ -8,12 +10,13 @@ enum Orientation{
 	HORIZONTAL
 };
 
-void Controller(unsigned char, int, int);
 void RenderWall(Orientation);
 void PreRender();
 void Render();
 void SetLighting();
-void Init();
+void InitRenderer();
 void LoadGLTextures();
+
+extern Maze maze;
 
 #endif

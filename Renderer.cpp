@@ -2,18 +2,65 @@
 #include <glut.h>
 #include "SOIL.h"
 #include "Renderer.h"
+#include "Controller.h"
 #include "Maze.h"
 
 #pragma comment(lib, "SOIL")
 
+// Rendering Initialization
+
 Maze maze(10, 10);
-unsigned int textures;
-unsigned int wallTexture;
-double timestamp = -1;
-double xPosition = 1.0f;
-double zPosition = -1.0f;
-double xTarget = 1.0f;
-double zTarget = 0.0f;
+unsigned int textures[2];
+
+void InitRenderer()
+{
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_TEXTURE_2D);       
+	glClearColor(0.0,0.0,0.0,0.0);
+	
+	LoadGLTextures();
+	SetLighting();
+
+	maze.Generate();
+	maze.Render2D();
+}
+
+void LoadGLTextures()
+{
+	textures[0] = SOIL_load_OGL_texture("ground.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
+	textures[1] = SOIL_load_OGL_texture("maze.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
+ 
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+}
+
+void SetLighting()
+{
+	GLfloat lightIntensity[]={1.0f,1.0f,1.0f,1.0f};
+	GLfloat light_position[]={7.0f,6.0f,3.0f,0.0f}; 
+	glLightfv(GL_LIGHT0,GL_POSITION,light_position); 
+	glLightfv(GL_LIGHT0,GL_DIFFUSE,lightIntensity);
+}
+
+// Rendering
+
+void PreRender()
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45.0, 1200.0/1000.0, 0.1, 100.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(position.xPosition, scale/2, position.zPosition,
+			  position.xTarget,   scale/2, position.zTarget,
+			  0, 1, 0
+			  );
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
 void RenderSolidCube()
 {
@@ -61,8 +108,6 @@ void RenderSolidCube()
 	}
 }
 
-
-
 void RenderWall(Orientation o, int x = 0, int z = 0)
 {
 	glPushMatrix();
@@ -81,53 +126,9 @@ void RenderWall(Orientation o, int x = 0, int z = 0)
 	glPopMatrix();
 }
 
-void Init()
-{
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glShadeModel(GL_SMOOTH);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);
-	glEnable(GL_TEXTURE_2D);       
-	SetLighting();
-	glClearColor(0.0,0.0,0.0,0.0);
-	maze.Generate();
-	maze.Render2D();
-	LoadGLTextures();
-}
-
-void LoadGLTextures()
-{
-	textures = SOIL_load_OGL_texture("ground.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
-	wallTexture = SOIL_load_OGL_texture("maze.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
- 
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-}
-
-void SetLighting()
-{
-	GLfloat lightIntensity[]={1.0f,1.0f,1.0f,1.0f};
-	GLfloat light_position[]={7.0f,6.0f,3.0f,0.0f}; 
-	glLightfv(GL_LIGHT0,GL_POSITION,light_position); 
-	glLightfv(GL_LIGHT0,GL_DIFFUSE,lightIntensity);
-}
-
-void PreRender()
-{
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	double winHt=1.0;
-	gluPerspective(45.0,1200.0/1000.0,1.0,100.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(xPosition, 1, zPosition,xTarget,1,zTarget,0,1,0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
 void RenderMaze()
 {
-	glBindTexture(GL_TEXTURE_2D, wallTexture);
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
 
 	for (int i = 0; i < maze.Height(); i++)
 	{
@@ -146,49 +147,26 @@ void RenderMaze()
 			RenderWall(HORIZONTAL, i*scale, maze.Height()*scale);
 }
 
-void Controller(unsigned char key, int xv, int y)
+void RenderFloor()
 {
-	switch(key)
-	{
-	case 'w':
-		zPosition += 0.1;
-		zTarget += 0.1;
-		break;
-	case 's':
-		zPosition -= 0.1;
-		zTarget -= 0.1;
-		break;
-	case 'a':
-		xPosition += 0.1;
-		xTarget += 0.1;
-		break;
-	case 'd':
-		xPosition -= 0.1;
-		xTarget -= 0.1;
-		break;
-	default:
-		break;
-	}
-	glutPostRedisplay();
-
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0,0);
+	glVertex3d(0,0,0);
+	glTexCoord2d(0,1);
+	glVertex3d(0,0,20);
+	glTexCoord2d(1,1);
+	glVertex3d(20,0,20);
+	glTexCoord2d(1,0);
+	glVertex3d(20,0,0);
+	glEnd();
 }
 
 void Render()
 {
 		PreRender();
-		
-		glBindTexture(GL_TEXTURE_2D, textures);
-		glBegin(GL_QUADS);
-		glTexCoord2d(0,0);
-		glVertex3d(0,0,0);
-		glTexCoord2d(0,1);
-		glVertex3d(0,0,20);
-		glTexCoord2d(1,1);
-		glVertex3d(20,0,20);
-		glTexCoord2d(1,0);
-		glVertex3d(20,0,0);
-		glEnd();
-
+		RenderFloor();
 		RenderMaze();
+		glColor3d(1.0,1.0,1.0);
 		glFlush();
 }

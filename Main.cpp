@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <glut.h>
 #include "Renderer.h"
+#include "Controller.h"
 
 using namespace std;
 
@@ -12,8 +13,9 @@ int main(int argc, char** argv)
 	glutInitWindowPosition(100, 50);
 	glutCreateWindow("Maze3D");
 	glutDisplayFunc(Render);
-	glutKeyboardFunc(Controller);
-	Init();
+	glutKeyboardFunc(Move);
+	InitRenderer();
+	InitController();
 	glutMainLoop();
 }
 
