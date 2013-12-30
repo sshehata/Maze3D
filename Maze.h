@@ -24,6 +24,8 @@ public:
 	void Generate();
 	bool IsWall(int row, int col, Direction direction);
 	void Render2D();
+	int Width() {return m_cols;}
+	int Height() {return m_rows;}
 };
 
 #endif

@@ -133,7 +133,7 @@ bool Maze::IsWall(int row, int col, Direction direction)
 
 void Maze::Render2D()
 {
-	for (int i = 0; i < m_rows; i++)
+	for (int i = 0; i < m_cols; i++)
 		cout << (IsWall(0, i, NORTH) ? " _" : "  ");
 	cout << endl;
 	

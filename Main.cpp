@@ -1,15 +1,19 @@
 #include <Windows.h>
-#include "Maze.h"
+#include <glut.h>
+#include "Renderer.h"
 
 using namespace std;
 
-int main()
+int main(int argc, char** argv)
 {
-	Maze maze(35,35);
-	maze.Generate();
-	maze.Render2D();
-	
-	
-	system("PAUSE");
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_SINGLE);
+	glutInitWindowSize(1200, 1000);
+	glutInitWindowPosition(100, 50);
+	glutCreateWindow("Maze3D");
+	glutDisplayFunc(Render);
+	glutKeyboardFunc(Controller);
+	Init();
+	glutMainLoop();
 }
 
