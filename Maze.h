@@ -14,7 +14,8 @@ private:
 	bool* m_horizontalEdges;
 	int m_rows;
 	int m_cols;
-	int m_exit;
+	int m_exitRow;
+	int m_exitCol;
 
 	void GenerateHelper(int, int, bool*);
 	inline bool isValid(int row, int col) { return row >= 0 && row < m_rows && col >= 0 && col < m_cols; }
@@ -26,6 +27,8 @@ public:
 	void Render2D();
 	int Width() {return m_cols;}
 	int Height() {return m_rows;}
+	int GetExitCol() {return m_exitCol;}
+	int GetExitRow() {return m_exitRow;}
 };
 
 #endif

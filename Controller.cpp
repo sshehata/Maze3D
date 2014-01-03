@@ -1,16 +1,27 @@
 #include <glut.h>
+#include <cmath>
 #include "Renderer.h"
 #include "Controller.h"
 
 PlayerPosition position;
+GameState state;
+int seconds;
+double score;
 
 void InitController()
 {
-	position.xPosition = 1.0f;
-	position.xTarget = 1.0f;
-	position.zPosition = 1.0f;
-	position.zTarget = 2.0f;
-	position.angle = 90.0f;
+	/*position.xPosition = MAZE_WIDTH - maze.GetExitCol() + 1;
+	position.xTarget = MAZE_WIDTH - maze.GetExitCol() + 1;
+	position.zPosition = MAZE_HEIGHT - maze.GetExitRow() + 1;
+	position.zTarget = MAZE_HEIGHT - maze.GetExitRow() + 2;
+	position.angle = 3.14/2.0f;*/
+
+	position.xPosition = MAZE_WIDTH+1;
+	position.zPosition = MAZE_HEIGHT+1;
+	position.xTarget = MAZE_WIDTH+1;
+	position.zTarget = MAZE_HEIGHT+1;
+	state = PLAY;
+	seconds = MAZE_WIDTH * MAZE_HEIGHT * 4;
 }
 
 bool isCollision(Orientation o, double x, double z)
@@ -32,7 +43,18 @@ bool isCollision(Orientation o, double x, double z)
 	else
 		collision = collision || (maze.IsWall(row, col, WEST) && (cellPosition < padding));
 
-	return collision;
+	return false;
+}
+
+void isWin()
+{
+	int row =  (int) position.zPosition/scale;
+	int col = (int) position.xPosition/scale;
+	if (row == maze.GetExitRow() && col == maze.GetExitCol()) {
+		score = seconds * log(MAZE_WIDTH * MAZE_HEIGHT);
+		state = WIN;
+		falling = true;
+	}
 }
 
 void Move(unsigned char key, int x, int y)
@@ -40,31 +62,40 @@ void Move(unsigned char key, int x, int y)
 	switch(key)
 	{
 	case 'w':
-		if (!isCollision(VERTICAL, position.xPosition + 0.1, position.zPosition + 0.2)
-			&& !isCollision(VERTICAL, position.xPosition - 0.1, position.zPosition))
+		if (!isCollision(VERTICAL, position.xPosition + 0.1 + 0.1*cos(position.angle), position.zPosition + 0.1 + 0.1*sin(position.angle))
+			&& !isCollision(VERTICAL, position.xPosition - 0.1 + 0.1*cos(position.angle), position.zPosition - 0.1 + 0.1*sin(position.angle))
+			&& state == PLAY)
 		{
-			position.zPosition += 0.1;
-			position.zTarget += 0.1;
+			position.zPosition += 0.1*sin(position.angle);
+			position.zTarget += 0.1*sin(position.angle);
+			position.xPosition += 0.1*cos(position.angle);
+			position.xTarget += 0.1*cos(position.angle);
 		}
 		break;
 	case 's':
-		if (!isCollision(VERTICAL, position.xPosition + 0.1, position.zPosition)
-			&& !isCollision(VERTICAL, position.xPosition - 0.1, position.zPosition - 0.2))
+		if (!isCollision(VERTICAL, position.xPosition + 0.1 - 0.1*cos(position.angle), position.zPosition + 0.1 - 0.1*sin(position.angle))
+			&& !isCollision(VERTICAL, position.xPosition - 0.1 - 0.1*cos(position.angle), position.zPosition - 0.1 - 0.1*sin(position.angle))
+			&& state == PLAY)
 		{
-			position.zPosition -= 0.1;
-			position.zTarget -= 0.1;
+			position.zPosition -= 0.1*sin(position.angle);
+			position.zTarget -= 0.1*sin(position.angle);
+			position.xPosition -= 0.1*cos(position.angle);
+			position.xTarget -= 0.1*cos(position.angle);
 		}
 		break;
 	case 'a':
-		position.xPosition += 0.1;
-		position.xTarget += 0.1;
+		position.angle -= 0.1;
+		position.zTarget = sin(position.angle) + position.zPosition;
+		position.xTarget = cos(position.angle) + position.xPosition;
 		break;
 	case 'd':
-		position.xPosition -= 0.1;
-		position.xTarget -= 0.1;
+		position.angle += 0.1;
+		position.zTarget = sin(position.angle) + position.zPosition;
+		position.xTarget = cos(position.angle) + position.xPosition;
 		break;
 	default:
 		break;
 	}
+	isWin();
 	glutPostRedisplay();
 }

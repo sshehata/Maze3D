@@ -14,7 +14,8 @@ Maze::Maze(int rows, int cols)
 	m_verticalEdges = m_horizontalEdges = NULL;
 	m_rows = rows;
 	m_cols = cols;
-	m_exit = 0;
+	m_exitCol = -1;
+	m_exitRow = -1;
 }
 
 void Maze::Generate()
@@ -32,28 +33,31 @@ void Maze::Generate()
 
 	srand(time(NULL));
 	int exitBorder = rand() % 4;
-	int exit = 0;
 	switch (exitBorder)
 	{
 	case NORTH:
-		exit = rand() % m_cols;
-		m_horizontalEdges[cell(0, exit)] = false;
-		GenerateHelper(0, exit, visited);
+		m_exitRow = 0;
+		m_exitCol = rand() % m_cols;
+		m_horizontalEdges[cell(0, m_exitCol)] = false;
+		GenerateHelper(0, m_exitCol, visited);
 		break;
 	case SOUTH:
-		exit = rand() % m_cols;
-		m_horizontalEdges[cell(m_rows, exit)] = false;
-		GenerateHelper(m_rows-1, exit, visited);
+		m_exitRow = m_rows - 1;
+		m_exitCol = rand() % m_cols;
+		m_horizontalEdges[cell(m_rows, m_exitCol)] = false;
+		GenerateHelper(m_rows-1, m_exitCol, visited);
 		break;
 	case EAST:
-		exit = rand() % m_rows;
-		m_verticalEdges[cell(exit, m_cols)] = false;
-		GenerateHelper(exit, m_cols-1, visited);
+		m_exitCol = m_cols - 1;
+		m_exitRow = rand() % m_rows;
+		m_verticalEdges[cell(m_exitRow, m_cols)] = false;
+		GenerateHelper(m_exitRow, m_cols-1, visited);
 		break;
 	case WEST:
-		exit = rand() % m_rows;
-		m_verticalEdges[cell(exit, 0)] = false;
-		GenerateHelper(exit, 0, visited);
+		m_exitCol = 0;
+		m_exitRow = rand() % m_rows;
+		m_verticalEdges[cell(m_exitRow, 0)] = false;
+		GenerateHelper(m_exitRow, 0, visited);
 		break;
 	default:
 		break;

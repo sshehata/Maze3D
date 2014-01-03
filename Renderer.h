@@ -4,6 +4,8 @@
 #include "Maze.h"
 
 #define scale 2
+#define MAZE_WIDTH 10
+#define MAZE_HEIGHT 10
 
 enum Orientation{
 	VERTICAL,
@@ -16,7 +18,9 @@ void Render();
 void SetLighting();
 void InitRenderer();
 void LoadGLTextures();
+void Idle();
 
+extern bool falling;
 extern Maze maze;
 
 #endif

@@ -4,6 +4,12 @@
 void Move(unsigned char, int, int);
 void InitController();
 
+enum GameState{
+	PLAY,
+	WIN,
+	LOSE
+};
+
 struct PlayerPosition{
 	double xPosition;
 	double zPosition;
@@ -13,5 +19,8 @@ struct PlayerPosition{
 };
 
 extern PlayerPosition position;
+extern GameState state;
+extern int seconds;
+extern double score;
 
 #endif

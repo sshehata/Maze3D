@@ -14,6 +14,7 @@ int main(int argc, char** argv)
 	glutCreateWindow("Maze3D");
 	glutDisplayFunc(Render);
 	glutKeyboardFunc(Move);
+	glutIdleFunc(Idle);
 	InitRenderer();
 	InitController();
 	glutMainLoop();

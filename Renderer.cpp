@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <string>
 #include <glut.h>
 #include "SOIL.h"
@@ -7,15 +8,19 @@
 
 #pragma comment(lib, "SOIL")
 
+using std::string;
+
 // Rendering Initialization
 
-Maze maze(10, 10);
-unsigned int textures[2];
+Maze maze(MAZE_WIDTH, MAZE_HEIGHT);
+unsigned int textures[3];
+long timestamp = 0;
 
 void InitRenderer()
 {
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_NORMALIZE);
@@ -33,6 +38,7 @@ void LoadGLTextures()
 {
 	textures[0] = SOIL_load_OGL_texture("ground.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
 	textures[1] = SOIL_load_OGL_texture("maze.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
+	textures[2] = SOIL_load_OGL_texture("pad.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, 0);
  
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -42,8 +48,28 @@ void SetLighting()
 {
 	GLfloat lightIntensity[]={1.0f,1.0f,1.0f,1.0f};
 	GLfloat light_position[]={7.0f,6.0f,3.0f,0.0f}; 
-	glLightfv(GL_LIGHT0,GL_POSITION,light_position); 
+	glLightfv(GL_LIGHT0,GL_POSITION,lightIntensity); 
 	glLightfv(GL_LIGHT0,GL_DIFFUSE,lightIntensity);
+
+	GLfloat lmodel_ambient[] = { 0.5, 0.5, 0.5, 1.0 };
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE) ;
+}
+
+double intens = 2;
+void SetDynamicLighting()
+{
+	GLfloat lightIntensity1[]={intens,0,0,1.0f};
+	GLfloat light_position1[]={maze.GetExitCol()*scale + scale/2,2,maze.GetExitRow()*scale + scale/2,1.0f}; 
+	GLfloat spotLight[] = {0,-2,0};
+	glLightfv(GL_LIGHT1,GL_POSITION,light_position1); 
+	glLightfv(GL_LIGHT1,GL_SPECULAR,lightIntensity1);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, lightIntensity1);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightIntensity1);
+	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 45);
+	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 0);
+    glLightfv(GL_LIGHT1,GL_SPOT_DIRECTION,spotLight);
 }
 
 // Rendering
@@ -55,10 +81,13 @@ void PreRender()
 	gluPerspective(45.0, 1200.0/1000.0, 0.1, 100.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	glEnable(GL_TEXTURE_2D);       
+	glEnable(GL_LIGHTING);
 	gluLookAt(position.xPosition, scale/2, position.zPosition,
-			  position.xTarget,   scale/2, position.zTarget,
+			  position.xTarget,  scale/2, position.zTarget,
 			  0, 1, 0
 			  );
+	SetDynamicLighting();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -108,10 +137,11 @@ void RenderSolidCube()
 	}
 }
 
-void RenderWall(Orientation o, int x = 0, int z = 0)
+void RenderWall(Orientation o, int x = 0, int z = 0, double y = 0)
 {
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
 	glPushMatrix();
-	glTranslated(x, 0, z);
+	glTranslated(x, y, z);
 	if (o == HORIZONTAL)
 	{
 		glTranslated(scale/2.0,scale/2.0,0);
@@ -126,47 +156,181 @@ void RenderWall(Orientation o, int x = 0, int z = 0)
 	glPopMatrix();
 }
 
+void RenderFloor(int i, int j)
+{
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glBegin(GL_QUADS);
+	glNormal3f(0, 1, 0);
+	glTexCoord2d(0,0);
+	glVertex3d(i,0,j);
+	glTexCoord2d(0,1);
+	glVertex3d(i,0,j+scale);
+	glTexCoord2d(1,1);
+	glVertex3d(i+scale,0,j+scale);
+	glTexCoord2d(1,0);
+	glVertex3d(i+scale,0,j);
+	glEnd();
+}
+
+double mazeHeight = -scale;
 void RenderMaze()
 {
-	glBindTexture(GL_TEXTURE_2D, textures[1]);
-
 	for (int i = 0; i < maze.Height(); i++)
 	{
 		for (int j = 0; j < maze.Width(); j++)
 		{
 			if (maze.IsWall(i, j, NORTH))
-				RenderWall(HORIZONTAL, j*scale, i*scale);
+				RenderWall(HORIZONTAL, j*scale, i*scale, mazeHeight);
 			if (maze.IsWall(i, j, WEST))
-				RenderWall(VERTICAL, j*scale, i*scale);
+				RenderWall(VERTICAL, j*scale, i*scale, mazeHeight);
+			RenderFloor(i*scale, j*scale);
+
 		}
 		if (maze.IsWall(i, maze.Width()-1, EAST))
-			RenderWall(VERTICAL, maze.Width()*scale, i*scale);
+			RenderWall(VERTICAL, maze.Width()*scale, i*scale, mazeHeight);
 	}
 	for (int i = 0; i < maze.Width(); i++)
 		if (maze.IsWall(maze.Height()-1, i, SOUTH))
-			RenderWall(HORIZONTAL, i*scale, maze.Height()*scale);
+			RenderWall(HORIZONTAL, i*scale, maze.Height()*scale, mazeHeight);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void RenderFloor()
+void RenderWinPad()
+{
+	// texture
+	glBindTexture(GL_TEXTURE_2D, textures[2]);
+
+	int exitCol = maze.GetExitCol();
+	int exitRow = maze.GetExitRow();
+
+	glBegin(GL_QUADS);
+	glTexCoord2d(0,0);
+	glVertex3d(exitCol * scale, 0.1, exitRow*scale);
+	glTexCoord2d(0,1);
+	glVertex3d((exitCol + 1) * scale,0.1, exitRow * scale);
+	glTexCoord2d(1,0);
+	glVertex3d((exitCol + 1) * scale,0.1,(exitRow + 1) * scale);
+	glTexCoord2d(1,1);
+	glVertex3d(exitCol * scale,0.1,(exitRow + 1) * scale);
+	glEnd();
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+string toString(int number)
+{
+	char buffer[21];
+	return itoa(number, buffer, 10);
+}
+
+void RenderText()
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	gluOrtho2D(0.0, 1200.0, 0.0, 1000.0);
+	
+	string s = "Time: ";
+	string time = s + toString(seconds);
+	glPushMatrix();
+	glTranslated(100, 900, 0);
+	glColor3d(0.7,0.7,0.7);
+	glScaled(0.15, 0.15, 0.15);
+	for (int i = 0; i < time.length(); i++)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, time[i]);
+	glPopMatrix();
+	
+	glTranslated(600, 900,0);
+	glScaled(0.2,0.2,0.2);
+	if (state == WIN) {
+		glColor3f(0.0f, 1.0f, 0.0f);
+			
+		for (char *p = "you win"; *p; p++)
+			glutStrokeCharacter(GLUT_STROKE_ROMAN, *p);
+		string s = "You Scored: ";
+		string sScore = s + toString(score);
+		glTranslated(-700, -200,0);
+		for (int i = 0; i < sScore.length(); i++)
+			glutStrokeCharacter(GLUT_STROKE_ROMAN, sScore[i]);
+	}
+	else if (state == LOSE)
+	{
+		glColor3f(1.0f, 0.0f, 0.0f);
+		for (char *p = "you lose"; *p; p++)
+			glutStrokeCharacter(GLUT_STROKE_ROMAN, *p);
+	}
+}
+
+void RenderFloor(int i, int j, int size)
 {
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	glBegin(GL_QUADS);
+	glNormal3f(0, 1, 0);
 	glTexCoord2d(0,0);
-	glVertex3d(0,0,0);
+	glVertex3d(i,-0.01,j);
 	glTexCoord2d(0,1);
-	glVertex3d(0,0,20);
+	glVertex3d(i,-0.01,j+size);
 	glTexCoord2d(1,1);
-	glVertex3d(20,0,20);
+	glVertex3d(i+size,-0.01,j+size);
 	glTexCoord2d(1,0);
-	glVertex3d(20,0,0);
+	glVertex3d(i+size,-0.01,j);
 	glEnd();
 }
 
 void Render()
 {
 		PreRender();
-		RenderFloor();
 		RenderMaze();
-		glColor3d(1.0,1.0,1.0);
+		RenderFloor(-10, -10, 100);
+		RenderText();
 		glFlush();
+}
+
+// Idle Function
+
+bool raising  = true;
+bool falling = false;
+double deltaIntens = 10;
+
+void Idle()
+{
+	double mseconds = glutGet(GLUT_ELAPSED_TIME) - timestamp;
+	if ((int)mseconds % 50 == 0)
+	{
+
+		intens += deltaIntens;
+		if (intens >= 500) 
+			deltaIntens = -10;
+		else if (intens <= 0) 
+			deltaIntens = 10;
+
+		if (raising && mazeHeight < 0)
+			mazeHeight += scale/1000.0;
+		else if (raising)
+			raising = false;
+		else if (falling && mazeHeight >= -scale)
+			mazeHeight -= scale/1000.0;
+		else if (falling)
+			falling = false;
+		glutPostRedisplay();
+
+	}
+
+
+	if (mseconds >= 1000 )
+	{
+		if (state == PLAY)
+		{
+			seconds--;
+			if (seconds <= 0)
+				state = LOSE;
+		}
+
+		
+
+		glutPostRedisplay();
+		timestamp += mseconds;
+	}
 }
