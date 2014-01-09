@@ -3,6 +3,7 @@
 
 void Move(unsigned char, int, int);
 void InitController();
+void Look(int, int);
 
 enum GameState{
 	PLAY,

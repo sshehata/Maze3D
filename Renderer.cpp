@@ -14,7 +14,8 @@ using std::string;
 
 Maze maze(MAZE_WIDTH, MAZE_HEIGHT);
 unsigned int textures[3];
-long timestamp = 0;
+double timestamp = 0;
+double timestamp2 = 0;
 
 void InitRenderer()
 {
@@ -281,11 +282,16 @@ void RenderFloor(int i, int j, int size)
 
 void Render()
 {
+	double mseconds = glutGet(GLUT_ELAPSED_TIME) - timestamp2;
+	if (mseconds >= 10)
+	{
 		PreRender();
 		RenderMaze();
 		RenderFloor(-10, -10, 100);
 		RenderText();
 		glFlush();
+		timestamp2 += mseconds;
+	}
 }
 
 // Idle Function
@@ -297,38 +303,25 @@ double deltaIntens = 10;
 void Idle()
 {
 	double mseconds = glutGet(GLUT_ELAPSED_TIME) - timestamp;
-	if ((int)mseconds % 50 == 0)
+	if ((int)mseconds % 50 == 0 (raising || falling))
 	{
-
-		intens += deltaIntens;
-		if (intens >= 500) 
-			deltaIntens = -10;
-		else if (intens <= 0) 
-			deltaIntens = 10;
-
 		if (raising && mazeHeight < 0)
-			mazeHeight += scale/1000.0;
+			mazeHeight += scale/100000.0;
 		else if (raising)
 			raising = false;
 		else if (falling && mazeHeight >= -scale)
-			mazeHeight -= scale/1000.0;
+			mazeHeight -= scale/100000.0;
 		else if (falling)
 			falling = false;
 		glutPostRedisplay();
 
 	}
 
-
-	if (mseconds >= 1000 )
+	if (mseconds >= 1000 && state == PLAY)
 	{
-		if (state == PLAY)
-		{
 			seconds--;
 			if (seconds <= 0)
 				state = LOSE;
-		}
-
-		
 
 		glutPostRedisplay();
 		timestamp += mseconds;

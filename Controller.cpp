@@ -1,7 +1,10 @@
+#include <iostream>
 #include <glut.h>
 #include <cmath>
 #include "Renderer.h"
 #include "Controller.h"
+
+using namespace std;
 
 PlayerPosition position;
 GameState state;
@@ -10,16 +13,11 @@ double score;
 
 void InitController()
 {
-	/*position.xPosition = MAZE_WIDTH - maze.GetExitCol() + 1;
-	position.xTarget = MAZE_WIDTH - maze.GetExitCol() + 1;
-	position.zPosition = MAZE_HEIGHT - maze.GetExitRow() + 1;
-	position.zTarget = MAZE_HEIGHT - maze.GetExitRow() + 2;
-	position.angle = 3.14/2.0f;*/
-
-	position.xPosition = MAZE_WIDTH+1;
-	position.zPosition = MAZE_HEIGHT+1;
-	position.xTarget = MAZE_WIDTH+1;
-	position.zTarget = MAZE_HEIGHT+1;
+	position.xPosition = (MAZE_WIDTH-1 - maze.GetExitCol())*scale + scale/2;
+	position.xTarget = (MAZE_WIDTH - maze.GetExitCol())*scale + scale/2;
+	position.zPosition = (MAZE_HEIGHT-1 - maze.GetExitRow())*scale + scale/2;
+	position.zTarget = (MAZE_HEIGHT - maze.GetExitRow())*scale + scale/2 + 1;
+	position.angle = 3.14/2.0f;
 	state = PLAY;
 	seconds = MAZE_WIDTH * MAZE_HEIGHT * 4;
 }
@@ -43,7 +41,7 @@ bool isCollision(Orientation o, double x, double z)
 	else
 		collision = collision || (maze.IsWall(row, col, WEST) && (cellPosition < padding));
 
-	return false;
+	return collision;
 }
 
 void isWin()
@@ -84,12 +82,12 @@ void Move(unsigned char key, int x, int y)
 		}
 		break;
 	case 'a':
-		position.angle -= 0.1;
+		position.angle -= 0.05;
 		position.zTarget = sin(position.angle) + position.zPosition;
 		position.xTarget = cos(position.angle) + position.xPosition;
 		break;
 	case 'd':
-		position.angle += 0.1;
+		position.angle += 0.05;
 		position.zTarget = sin(position.angle) + position.zPosition;
 		position.xTarget = cos(position.angle) + position.xPosition;
 		break;
@@ -97,5 +95,20 @@ void Move(unsigned char key, int x, int y)
 		break;
 	}
 	isWin();
+	glutPostRedisplay();
+}
+
+int prevX = 0;
+
+void Look(int x, int y)
+{
+	static int prevX = x;
+	if (x >= prevX)
+		position.angle += (x - prevX)/300.0;
+	else
+		position.angle -= (prevX - x)/300.0;
+	position.zTarget = sin(position.angle) + position.zPosition;
+	position.xTarget = cos(position.angle) + position.xPosition;
+	prevX = x;
 	glutPostRedisplay();
 }

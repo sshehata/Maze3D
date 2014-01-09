@@ -5,6 +5,7 @@
 #include "Maze.h"
 
 #define cell(r,c) ((r)*m_cols + (c))
+#define cell2(r,c) ((r)*(m_cols+1) + (c))
 
 using std::cout;
 using std::endl;
@@ -50,21 +51,24 @@ void Maze::Generate()
 	case EAST:
 		m_exitCol = m_cols - 1;
 		m_exitRow = rand() % m_rows;
-		m_verticalEdges[cell(m_exitRow, m_cols)] = false;
+		m_verticalEdges[cell2(m_exitRow, m_cols)] = false;
 		GenerateHelper(m_exitRow, m_cols-1, visited);
 		break;
 	case WEST:
 		m_exitCol = 0;
 		m_exitRow = rand() % m_rows;
-		m_verticalEdges[cell(m_exitRow, 0)] = false;
+		m_verticalEdges[cell2(m_exitRow, 0)] = false;
 		GenerateHelper(m_exitRow, 0, visited);
 		break;
 	default:
 		break;
 	}
-	
-	for (int i = 0; i < m_rows * (m_cols+1); i++)
-		bool b = m_verticalEdges[i];
+
+	for (int i = 0; i < m_rows*(m_cols+1); i++)
+		cout << m_verticalEdges[i];
+	cout << endl;
+	cout << m_exitRow << ", " << m_exitCol;
+	cout << endl;
 
 	delete [] visited;
 }
@@ -100,14 +104,14 @@ void Maze::GenerateHelper(int row, int col, bool* visisted)
 			case EAST:
 				if (isValid(row, col+1) && !visisted[cell(row, col+1)])
 				{
-					m_verticalEdges[cell(row, col+1)] = false;
+					m_verticalEdges[cell2(row, col+1)] = false;
 					GenerateHelper(row, col+1, visisted);
 				}
 				break;
 			case WEST:
 				if (isValid(row, col-1) && !visisted[cell(row, col-1)])
 				{
-					m_verticalEdges[cell(row, col)] = false;
+					m_verticalEdges[cell2(row, col)] = false;
 					GenerateHelper(row, col-1, visisted);
 				}
 				break;
@@ -127,9 +131,9 @@ bool Maze::IsWall(int row, int col, Direction direction)
 	case SOUTH:
 		return m_horizontalEdges[cell(row+1,col)];
 	case EAST:
-		return m_verticalEdges[cell(row, col+1)];
+		return m_verticalEdges[cell2(row, col+1)];
 	case WEST:
-		return m_verticalEdges[cell(row,col)];
+		return m_verticalEdges[cell2(row,col)];
 	default:
 		return false;
 	}
@@ -148,7 +152,7 @@ void Maze::Render2D()
 			cout << (IsWall(i, j, WEST) ? "|" : " ");
 			cout << (IsWall(i, j, SOUTH) ? "_" : " ");
 		}
-		cout << (IsWall(i, m_cols-1, EAST) ? "|" : " ");
+		cout << (IsWall(i, m_cols, WEST) ? "|" : " ");
 		cout << endl;
 	}
 	cout << endl;

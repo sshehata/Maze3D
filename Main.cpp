@@ -15,6 +15,7 @@ int main(int argc, char** argv)
 	glutDisplayFunc(Render);
 	glutKeyboardFunc(Move);
 	glutIdleFunc(Idle);
+	glutPassiveMotionFunc(Look);
 	InitRenderer();
 	InitController();
 	glutMainLoop();
